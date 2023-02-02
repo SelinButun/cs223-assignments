@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+//struct
 struct song{
     char title[32];
     char artist[32];
@@ -10,6 +11,7 @@ struct song{
     float dance;
 };
 
+//editSong method edits an aspect of the default struct according to user input
 void editSong(struct song* defSongs){
     printf("Which attribute do you wish to edit? [artist, title, duration, danceability]: ");
     char *attribute = malloc(sizeof(char) * 32);
@@ -44,6 +46,8 @@ void editSong(struct song* defSongs){
     }
     free(attribute);
 }
+//main method first prints out the default song list, then asks the user to edit and
+//calls on editSong method
 int main(){
     struct song defSongs[3];
     //titles
@@ -79,7 +83,8 @@ int main(){
 	    return 0;
     }
     editSong(&defSongs[pickedSong]);
-
+    
+    //prints again after editSong method is complete and struct is updated
     for(int i = 0; i < 3; i++){
         printf("%d) %-20s artist: %-20s duration: %d:%-16d danceability %.1f\n", i, defSongs[i].title, defSongs[i].artist, defSongs[i].mins, defSongs[i].secs, defSongs[i].dance);
     }
