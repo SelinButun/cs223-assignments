@@ -41,15 +41,15 @@ int main(){
     fgets(attribute, 1024, infile);
     int index = 0;
     while (fgets(attribute, 1024, infile) != NULL){
-        temp = strtok(attribute, delim); //title
-        strcpy(songsList[index].title, temp);
+        temp = strtok(attribute, delim); 
+        strcpy(songsList[index].title, temp);//title
         temp = strtok(NULL,",");
-        strcpy(songsList[index].artist, temp);
+        strcpy(songsList[index].artist, temp);//artist
         temp = strtok(NULL,",");
         float tempNum = atof(temp); //number for mins and secs
         int minute = tempNum / 60000;
         songsList[index].mins = minute;
-        int seconds = (tempNum - (minute / 60000))/1000;
+        int seconds = (tempNum - (minute * 60000))/1000;
         songsList[index].secs = seconds;
         temp = strtok(NULL,",");
         tempNum = atof(temp); //number for danceability
