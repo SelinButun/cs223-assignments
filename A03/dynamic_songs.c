@@ -36,10 +36,10 @@ int main(){
     char *temp = malloc(sizeof(char) * 1024);
     fgets(attribute, 1024, infile);
     int size = atoi(strtok(attribute, delim));
-
     struct song *songsList = malloc(size * sizeof(struct song));
     fgets(attribute, 1024, infile);
     int index = 0;
+    
     while (fgets(attribute, 1024, infile) != NULL){
         temp = strtok(attribute, delim); 
         strcpy(songsList[index].title, temp);//title
@@ -67,9 +67,9 @@ int main(){
         index++;
     }
     for(int i = 0; i < 18; i++){
-        printf("%d) %-16s artist: %-16s duration: %d:%-16d D: %-16.3f E: %-16.3f T: %-16.3f V: %-16.3f\n", i, songsList[i].title, songsList[i].artist, songsList[i].mins, songsList[i].secs, songsList[i].dance, songsList[i].energy, songsList[i].tempo, songsList[i].valence);
+        printf("%d) %-27s artist: %-16s duration: %d:%-10d D: %-10.3f E: %-10.3f T: %-10.3f V: %-10.3f\n", i, songsList[i].title, songsList[i].artist, songsList[i].mins, songsList[i].secs, songsList[i].dance, songsList[i].energy, songsList[i].tempo, songsList[i].valence);
     }
-   
+    
     free(temp);
     temp = NULL; 
     free(songsList);
