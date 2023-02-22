@@ -64,7 +64,10 @@ int main(int argc, char* argv[]) {
 	}
 	printf("\n");
     }
-
+    
+    for (int m = 0; m < length1; m++){
+        free(cross[m]);
+    }
     free(cross);
     return 0;
 }
