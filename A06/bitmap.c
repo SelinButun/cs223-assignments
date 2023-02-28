@@ -1,4 +1,4 @@
-/*
+/*---------------------------------------------
  * Author: Selin Butun
  * Date: March 1, 2023
  * Description: Program that reads in a file containing
