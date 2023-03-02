@@ -82,9 +82,9 @@ int main(int argc, char** argv) {
   }
 
   char delim[] = ".ppm";
-  char token = strtok(argv[1], delim);
+  char *token = strtok(argv[1], delim);
   char add[] = "-encoded.ppm";
-  char filename = strcat(token, add);
+  char *filename = strcat(token, add);
   write_ppm_2d(filename, pixels, w, h);
 
   for (int m = 0; m < h; m++){
