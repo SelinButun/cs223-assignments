@@ -1,6 +1,6 @@
 /*----------------------------------------------
- * Author: 
- * Date:
+ * Author: Selin Butun 
+ * Date: March 1, 2023
  * Description: Read in Portable Pixel Map files
  * in binary format. Places information into a
  * 2D dynamic array of structs.
@@ -23,7 +23,9 @@ struct ppm_pixel** read_ppm_2d(const char* filename, int* w, int* h) {
   char attribute[1024];
   fgets(attribute, 1024, fp);
   fgets(attribute, 1024, fp);
-  fgets(attribute, 1024, fp);//3rd line contains row and column size
+  while(attribute[0] == '#'){
+	fgets(attribute, 1024, fp);//3rd line contains row and column size
+  }
   sscanf(attribute,"%d %d", w, h);
   fgets(attribute, 1024, fp);
   struct ppm_pixel** arr; //declaring a 2D array of structs

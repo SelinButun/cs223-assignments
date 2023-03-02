@@ -15,8 +15,6 @@ int main(int argc, char** argv) {
     return 0;
   }
   
-  //char filename[1024] = argv[1];
-  //scanf(" %s", &filename);
   int w, h;
   struct ppm_pixel** pixels = read_ppm_2d(argv[1], &w, &h);
   printf("Reading %s with width %d and height %d\n", argv[1], w, h);
@@ -25,14 +23,15 @@ int main(int argc, char** argv) {
   int greenBit;
   int size = 0;
   if(h == 0){
-    size = w * 3;
+    printf("image can't have 0 height\n");
+    exit(1);
   }
   else{
     size = w * h * 3;
   }
-  //int size = w * h * 3;
   printf("Max number of chars in the image: %d\n", size/8);
   int index = 0;
+  //bitHold contains the least sig bits of each color in PPM
   int *bitHold = malloc(sizeof(int) * size);
 
   for(int i = 0; i < h; i++){
@@ -49,6 +48,7 @@ int main(int argc, char** argv) {
      }
   }
   
+  //convert holds the byte version of the bits from bitHold
   int *convert = malloc(sizeof(int) * size);
   int count = 0;
   for(int m = 0; m < size; m += 8){
