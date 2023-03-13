@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
   int count = 0;
   for(int j = 0; j < h; j++){
      for(int k = 0; k < w; k++){
-	    redBit = pixels[j][k].red % 2;
+	redBit = pixels[j][k].red % 2;
         if((redBit == 1 && bitHold[count] == 1) || (redBit == 0 && bitHold[count] == 0)){ //stay same
             count++;
         }
