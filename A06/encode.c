@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
      }
   }
 
-  char delim[] = ".ppm";
+  char delim[] = ".";
   char *token = strtok(argv[1], delim);
   char add[] = "-encoded.ppm";
   char *filename = strcat(token, add);
