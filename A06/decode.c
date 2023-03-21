@@ -63,6 +63,7 @@ int main(int argc, char** argv) {
         count++;
     }
   }
+  printf("\n");
   
   for (int m = 0; m < h; m++){
 	free(pixels[m]);

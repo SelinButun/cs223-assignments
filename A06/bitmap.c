@@ -1,5 +1,6 @@
-/*
-* Date: March 1, 2023
+/*---------------------------------------------
+ * Author: Selin Butun
+ * Date: March 1, 2023
  * Description: Program that reads in a file containing
  * a hex code, and prints out a 8x8 1 bpp sprite.
  ---------------------------------------------*/
