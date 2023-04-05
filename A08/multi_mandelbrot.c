@@ -13,68 +13,13 @@
 #include <sys/shm.h>
 #include "read_ppm.h"
 #include "write_ppm.h"
+#include <assert.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <sys/ipc.h>
 
-int main(int argc, char* argv[]) {
-  int size = 480;
-  float xmin = -2.0;
-  float xmax = 0.47;
-  float ymin = -1.12;
-  float ymax = 1.12;
-  int maxIterations = 1000;
-  int numProcesses = 4;
-
-  int opt;
-  while ((opt = getopt(argc, argv, ":s:l:r:t:b:")) != -1) {
-    switch (opt) {
-      case 's': size = atoi(optarg); break;
-      case 'l': xmin = atof(optarg); break;
-      case 'r': xmax = atof(optarg); break;
-      case 't': ymax = atof(optarg); break;
-      case 'b': ymin = atof(optarg); break;
-      case '?': printf("usage: %s -s <size> -l <xmin> -r <xmax> -b <ymin> -t <ymax>\n", argv[0]); break;
-    }
-  } 
-  printf("Generating mandelbrot with size %dx%d\n", size, size);
-  printf("  X range = [%.4f,%.4f]\n", xmin, xmax);
-  printf("  Y range = [%.4f,%.4f]\n", ymin, ymax);
-
-  // todo: your work here
-  // generate pallet
-
-  int shmid;
-  int shmid2;
-  int shmid3;
-
-  shmid3 = shmget(IPC_PRIVATE, sizeof(struct ppm_pixel*) * size, 0644 | IPC_CREAT);
-  struct ppm_pixel *palette = shmat(shmid3, NULL, 0);
-
-  int *shmids = malloc(size * sizeof(int));
-  shmid = shmget(IPC_PRIVATE, sizeof(struct ppm_pixel*) * size, 0644 | IPC_CREAT);
-  struct ppm_pixel **image = shmat(shmid, NULL, 0);
-  for(int p = 0; p < size; p++){
-    shmids[p] = shmget(IPC_PRIVATE, sizeof(struct ppm_pixel) * size, 0644 | IPC_CREAT);
-    image[p] = shmat(shmid2, NULL, 0); 
-  }
-
-  if (shmid == -1 || shmid3 == -1) {
-    perror("Error: cannot initialize shared memory\n");
-    exit(1);
-  }
-
-  if (buffer == (void*) -1) {
-    perror("Error: cannot access shared memory\n");
-    exit(1);
-  } 
-  
-    srand(time(0));
-    for(int i  = 0; i < maxIterations; i++){
-    palette[i].red = rand() % 255;
-    palette[i].green = rand() % 255;
-    palette[i].blue = rand() % 255;
-  }
-
-
-  // start timer here, timer ends after writing image compute image
+void quadrant(double beginRow, double endRow, double beginCols, double endCols,int maxIterations, int size, float ymax, float ymin, float xmax, float xmin, struct ppm_pixel *palette, struct ppm_pixel **image){
+  float xtmp;
   float xfrac;
   float yfrac;
   float x0;
@@ -82,46 +27,8 @@ int main(int argc, char* argv[]) {
   float x = 0;
   float y = 0;
   int iter = 0;
-  float xtmp;
-  struct timeval tstart, tend;
-  double timer;
-  double beginRow = 0;
-  double endRow = 0;
-  double beginCol = 0;
-  double endCol = 0;
-  
-  gettimeofday(&tstart, NULL);
-  
-  for(int c = 0; c < numProcesses; c++){
-  int pid = fork();
-  if(c == 0){
-    beginRow = 0;
-    endRow = 240;
-    beginCol = 0;
-    endCol = 240;
-  }
-  else if(c == 1){
-    beginRow = 0;
-    endRow = 240;
-    beginCol = 240;
-    endCol = 480;
-  }
-  else if(c == 2){
-    beginRow = 240;
-    endRow = 480;
-    beginCol = 0;
-    endCol = 240;
-  }
-  else if(c == 3){
-    beginRow = 240;
-    endRow = 480;
-    beginCol = 240;
-    endCol = 480;
-  }
-  printf("%d) Sub-image block: cols (%d, %d) to rows (%d, %d), pid, beginCols, endCols, beginRow, beginCol)";
-  
   for(int j = beginRow; j < endRow; j++){
-    for(int k = beginCol; k < endCol; k++){
+    for(int k = beginCols; k < endCols; k++){
       xfrac = (float)k / size;
       yfrac = (float)j / size;
       x0 = xmin + xfrac * (xmax - xmin);
@@ -147,10 +54,125 @@ int main(int argc, char* argv[]) {
         image[j][k].blue = 0;
       }
     }
-    printf("Launched child process: %d\n", pid);
+  }
+}
+
+int main(int argc, char* argv[]) {
+  int size = 480;
+  float xmin = -2.0;
+  float xmax = 0.47;
+  float ymin = -1.12;
+  float ymax = 1.12;
+  int maxIterations = 1000;
+  int numProcesses = 4;
+
+  int opt;
+  while ((opt = getopt(argc, argv, ":s:l:r:t:b:")) != -1) {
+    switch (opt) {
+      case 's': size = atoi(optarg); break;
+      case 'l': xmin = atof(optarg); break;
+      case 'r': xmax = atof(optarg); break;
+      case 't': ymax = atof(optarg); break;
+      case 'b': ymin = atof(optarg); break;
+      case '?': printf("usage: %s -s <size> -l <xmin> -r <xmax> -b <ymin> -t <ymax>\n", argv[0]); break;
+    }
+  } 
+  printf("Generating mandelbrot with size %dx%d\n", size, size);
+  printf("  X range = [%.4f,%.4f]\n", xmin, xmax);
+  printf("  Y range = [%.4f,%.4f]\n", ymin, ymax);
+
+  int shmid;
+  shmid = shmget(IPC_PRIVATE, sizeof(struct ppm_pixel) * size *size, 0644 | IPC_CREAT); 
+  if (shmid == -1) {
+    perror("Error: cannot initialize shared memory\n");
+    exit(1);
+  }
+  struct ppm_pixel *raw = shmat(shmid, NULL, 0);
+  if (raw == (void*) -1) {
+    perror("Error: cannot access shared memory\n");
+    exit(1);
+  } 
+  struct ppm_pixel **image = malloc(size * sizeof(struct ppm_pixel*));
+  for(int p = 0; p < size; p++){
+    image[p] = &(raw[p * size]);
+  }
+    
+  srand(time(0));
+  struct ppm_pixel *palette = malloc(maxIterations * sizeof(struct ppm_pixel));
+  for(int i  = 0; i < maxIterations; i++){
+    palette[i].red = rand() % 255;
+    palette[i].green = rand() % 255;
+    palette[i].blue = rand() % 255;
+  }
+
+
+  double beginRow = 0;
+  double endRow = 0;
+  double beginCols = 0;
+  double endCols = 0;
+  float xtmp;
+  struct timeval tstart, tend;
+  double timer;
+  
+  gettimeofday(&tstart, NULL);
+  for(int c = 0; c < numProcesses; c++){
+    int pid = fork();
+    if(pid == 0){
+      if(c == 0){
+        beginRow = 0;
+        endRow = 240;
+        beginCols = 0;
+        endCols = 240;
+        quadrant(beginRow, endRow, beginCols, endCols, maxIterations, size, ymax, ymin, xmax, xmin, palette, image);
+        printf("Launched child process: %d\n", pid);
+        printf("%d) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+                  pid, beginCols, endCols, beginRow, endRow);
+        free(image);
+	free(palette);
+	exit(0);
+      }
+      else if(c == 1){
+        beginRow = 0;
+        endRow = 240;
+        beginCols = 240;
+        endCols = 480;
+        quadrant(beginRow, endRow, beginCols, endCols, maxIterations, size, ymax, ymin, xmax, xmin, palette, image);
+        printf("Launched child process: %d\n", pid);
+        printf("%d) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+                  pid, beginCols, endCols, beginRow, endRow);
+        free(palette);
+	free(image);
+	exit(0);
+      }
+      else if(c == 2){
+        beginRow = 240;
+        endRow = 480;
+        beginCols = 0;
+        endCols = 240;
+        quadrant(beginRow, endRow, beginCols, endCols, maxIterations, size, ymax, ymin, xmax, xmin, palette, image);
+        printf("Launched child process: %d\n", pid);
+        printf("%d) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+                  pid, beginCols, endCols, beginRow, endRow);
+        free(palette);
+	free(image);
+	exit(0);
+      }
+      else if(c == 3){
+        beginRow = 240;
+        endRow = 480;
+        beginCols = 240;
+        endCols = 480;
+        quadrant(beginRow, endRow, beginCols, endCols, maxIterations, size, ymax, ymin, xmax, xmin, palette, image);
+        printf("Launched child process: %d\n", pid);
+        printf("%d) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+                  pid, beginCols, endCols, beginRow, endRow);
+        free(palette);
+	free(image);
+	exit(0);
+      }
+    }
   }
   
-
   for (int r = 0; r < numProcesses; r++) {
     int status;
     int pid = wait(&status);
@@ -165,36 +187,16 @@ int main(int argc, char* argv[]) {
   printf("Computed mandelbrot set (%dx%d) in %f seconds\n", size, size, timer);
   printf("Writing file: %s\n", filename);
   free(filename);
-  
-  if (shmdt(palette) == -1) {
-    perror("Error: cannot detatch from shared memory\n");
-    exit(1);
-  }
+  free(palette);
+  free(image);
 
-  if (shmctl(shmid3, IPC_RMID, 0) == -1) {
-    perror("Error: cannot remove shared memory\n");
-    exit(1);
-  }
-  
-  for(int g = 0; g < size; g++){
-    if (shmdt(image) == -1) {
-      perror("Error: cannot detatch from shared memory\n");
-      exit(1);
-    }
-    if (shmctl(shmids[g], IPC_RMID, 0) == -1) {
-      perror("Error: cannot remove shared memory\n");
-      exit(1);
-    }
-  }
-  if (shmdt(image) == -1) {
+  if (shmdt(raw) == -1) {
     perror("Error: cannot detatch from shared memory\n");
     exit(1);
   }
-  
-  if (shmctl(shmids, IPC_RMID, 0) == -1) {
+  if (shmctl(shmid, IPC_RMID, 0) == -1) {
     perror("Error: cannot remove shared memory\n");
     exit(1);
   }
-  
-  
-}
+  exit(0);
+ }
