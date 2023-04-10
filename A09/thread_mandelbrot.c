@@ -33,7 +33,6 @@ struct ppm_pixel **image){
   int iter = 0;
   for(int j = beginRow; j < endRow; j++){
     for(int k = beginCols; k < endCols; k++){
-      printf("check: %d, %d \n", j, k);
       xfrac = (float)k / size;
       yfrac = (float)j / size;
       x0 = xmin + xfrac * (xmax - xmin);
@@ -79,7 +78,6 @@ struct ThreadStruct{
 
 void *ThreadFunction(void *id){
   struct ThreadStruct *threadObj = (struct ThreadStruct*) id;
-  printf("check");
   quadrant(threadObj -> beginRow, threadObj -> endRow, threadObj -> beginCols, threadObj -> endCols, 
   threadObj -> maxIterations, threadObj -> size, threadObj -> ymax, threadObj -> ymin, threadObj -> xmax,
   threadObj -> xmin, threadObj -> palette, threadObj -> image);
@@ -153,7 +151,7 @@ int main(int argc, char* argv[]) {
         datas[c].maxIterations = 1000;
         datas[c].palette = palette;
         datas[c].image = image;
-        pthread_create(&thread1, NULL, ThreadFunction, &id1);
+        pthread_create(&thread1, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id1);
         printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
                   id1, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
@@ -171,7 +169,7 @@ int main(int argc, char* argv[]) {
         datas[c].maxIterations = 1000;
         datas[c].palette = palette;
         datas[c].image = image;
-        pthread_create(&thread2, NULL, ThreadFunction, &id2);
+        pthread_create(&thread2, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id2);
         printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
                   id2, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
@@ -189,7 +187,7 @@ int main(int argc, char* argv[]) {
         datas[c].maxIterations = 1000;
         datas[c].palette = palette;
         datas[c].image = image;
-        pthread_create(&thread3, NULL, ThreadFunction, &id3);
+        pthread_create(&thread3, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id3);
         printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
                   id3, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
@@ -207,7 +205,7 @@ int main(int argc, char* argv[]) {
         datas[c].maxIterations = 1000;
         datas[c].palette = palette;
         datas[c].image = image;
-        pthread_create(&thread4, NULL, ThreadFunction, &id4);
+        pthread_create(&thread4, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id4);
         printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
                   id4, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
