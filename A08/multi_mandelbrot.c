@@ -18,9 +18,14 @@
 #include <sys/wait.h>
 #include <sys/ipc.h>
 
+<<<<<<< HEAD
 void quadrant(double beginRow, double endRow, double beginCols, double endCols,int maxIterations, 
 int size, float ymax, float ymin, float xmax, float xmin, struct ppm_pixel *palette, 
 struct ppm_pixel **image){
+=======
+void quadrant(double beginRow, double endRow, double beginCols, double endCols,int maxIterations, int size, 
+	      float ymax, float ymin, float xmax, float xmin, struct ppm_pixel *palette, struct ppm_pixel **image){
+>>>>>>> 1dde0512d1a6c3f62e8d9388005f35aa87c0fa71
   float xtmp;
   float xfrac;
   float yfrac;
