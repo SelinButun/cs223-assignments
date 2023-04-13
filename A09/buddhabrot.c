@@ -20,11 +20,12 @@
 #include <sys/ipc.h>
 #include <pthread.h>
 #include <math.h>
+#include <string.h>
 
 pthread_mutex_t mutex;
 pthread_barrier_t barrier;
 
-void step1(double beginRow, double endRow, double beginCols, double endCols,int maxIterations, 
+void step1(int beginRow, int endRow, int beginCols, int endCols,int maxIterations, 
 int size, float ymax, float ymin, float xmax, float xmin, int* member, int* counts, struct ppm_pixel ** image,
 int* maxCount, struct ppm_pixel *palette){
   float xtmp;
@@ -67,65 +68,59 @@ int* maxCount, struct ppm_pixel *palette){
   }
 }
 
-void step2(double beginRow, double endRow, double beginCols, double endCols,int maxIterations, 
+void step2(int beginRow, int endRow, int beginCols, int endCols,int maxIterations, 
 int size, float ymax, float ymin, float xmax, float xmin, int* member, int* counts, struct ppm_pixel ** image,
 int* maxCount, struct ppm_pixel *palette){
-  float xtmp;
-  float xfrac;
-  float yfrac;
-  float x0;
-  float y0;
+  float xtmp = 0;
+  float xfrac = 0;
+  float yfrac = 0;
+  float x0 = 0;
+  float y0 = 0;
   float x = 0;
   float y = 0;
   int iter = 0;
-  int yrow;
-  int xcol;
+  int yrow = 0;
+  int xcol = 0;
   
-
   for(int u = beginRow; u < endRow; u++){
     for(int j = beginCols; j < endCols; j++){
       if(member[u * size + j] == 1){
-        xfrac = (float)u / size;
-        yfrac = (float)j / size;
-        x0 = xmin + xfrac * (xmax - xmin);
-        y0 = ymin + yfrac * (ymax - ymin);
-        x = 0;
-        y = 0;
-      }
-      while (x*x + y*y < 2*2){
+        continue;
+      }else{
+      xfrac = (float)j / size;
+      yfrac = (float)u / size;
+      x0 = xmin + xfrac * (xmax - xmin);
+      y0 = ymin + yfrac * (ymax - ymin);
+      x = 0;
+      y = 0;
+
+      while ((x*x + y*y) < 4){ //
         xtmp = x*x - y*y + x0;
         y = 2*x*y + y0;
         x = xtmp;
 
-        yrow = round(size * (y - ymin)/(ymax - ymin));
-        xcol = round(size * (x - xmin)/(xmax - xmin));
-        if (yrow < 0 || yrow >= size){ continue;} // out of range
-        if (xcol < 0 || xcol >= size){ continue;} // out of range
+        yrow = round(size * (y - ymin)/(ymax - ymin)); //
+        xcol = round(size * (x - xmin)/(xmax - xmin)); //
+        if (yrow < 0 || yrow >= size){ continue;} // out of range //
+        if (xcol < 0 || xcol >= size){ continue;} // out of range //
 
         pthread_mutex_lock(&mutex);
-        counts[yrow * size + xcol] += 1; //increment count at (yrow, xcol)
-        if(counts[yrow * size + xcol] > *maxCount){
-          *maxCount = counts[yrow * size + xcol];
+        counts[yrow * size + xcol] += 1; //increment count at (yrow, xcol) //
+        //printf("in while, before if\n");
+        if((counts[yrow * size + xcol]) > *maxCount){ //
+          *maxCount = counts[yrow * size + xcol]; //
         }
         pthread_mutex_unlock(&mutex);
+        //printf("in while, after if\n");
       }
+    }
     }
   }
 }
 
-void step3(double beginRow, double endRow, double beginCols, double endCols,int maxIterations, 
+void step3(int beginRow, int endRow, int beginCols, int endCols,int maxIterations, 
 int size, float ymax, float ymin, float xmax, float xmin, int* member, int* counts, struct ppm_pixel ** image,
 int* maxCount, struct ppm_pixel *palette){
-  float xtmp;
-  float xfrac;
-  float yfrac;
-  float x0;
-  float y0;
-  float x = 0;
-  float y = 0;
-  int iter = 0;
-  int yrow;
-  int xcol;
   float gamma = 0.681;
   float factor = 1.0/gamma;
 
@@ -150,10 +145,10 @@ struct ThreadStruct{
   float ymin;
   float ymax;
   int maxIterations;
-  double beginRow;
-  double endRow;
-  double beginCols;
-  double endCols;
+  int beginRow;
+  int endRow;
+  int beginCols;
+  int endCols;
   struct ppm_pixel *palette;
   struct ppm_pixel **image;
   int *member;
@@ -202,7 +197,7 @@ int main(int argc, char* argv[]) {
         "-b <ymin> -t <ymax> -p <numProcesses>\n", argv[0]); break;
     }
   }
-  printf("Generating mandelbrot with size %dx%d\n", size, size);
+  printf("Generating buddhabrot with size %dx%d\n", size, size);
   printf("  Num processes = %d\n", numProcesses);
   printf("  X range = [%.4f,%.4f]\n", xmin, xmax);
   printf("  Y range = [%.4f,%.4f]\n", ymin, ymax);
@@ -221,12 +216,15 @@ int main(int argc, char* argv[]) {
   }
   
   int *member = malloc(sizeof(int) * size * size);
+  memset(member, 0, size * size * sizeof(int));
   int *counts = malloc(sizeof(int) * size * size);
+  memset(counts, 0, size * size * sizeof(int));
 
-  double beginRow = 0;
-  double endRow = 0;
-  double beginCols = 0;
-  double endCols = 0;
+
+  int beginRow = 0;
+  int endRow = 0;
+  int beginCols = 0;
+  int endCols = 0;
   float xtmp;
   struct timeval tstart, tend;
   double timer;
@@ -258,7 +256,7 @@ int main(int argc, char* argv[]) {
         datas[c].counts = counts;
         pthread_create(&thread1, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id1);
-        printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+        printf("%lu) Sub-image block: cols (%d, %d) to rows (%d, %d)\n",
                   id1, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
       }
       else if(c == 1){
@@ -279,7 +277,7 @@ int main(int argc, char* argv[]) {
         datas[c].counts = counts;
         pthread_create(&thread2, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id2);
-        printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+        printf("%lu) Sub-image block: cols (%d, %d) to rows (%d, %d)\n",
                   id2, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
       }
       else if(c == 2){
@@ -300,7 +298,7 @@ int main(int argc, char* argv[]) {
         datas[c].counts = counts;
         pthread_create(&thread3, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id3);
-        printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+        printf("%lu) Sub-image block: cols (%d, %d) to rows (%d, %d)\n",
                   id3, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
       }
       else if(c == 3){
@@ -321,7 +319,7 @@ int main(int argc, char* argv[]) {
         datas[c].counts = counts;
         pthread_create(&thread4, NULL, ThreadFunction, &(datas[c]));
         printf("Launched thread process: %lu\n", id4);
-        printf("%lu) Sub-image block: cols (%f, %f) to rows (%f, %f)\n",
+        printf("%lu) Sub-image block: cols (%d, %d) to rows (%d, %d)\n",
                   id4, datas[c].beginCols, datas[c].endCols, datas[c].beginRow, datas[c].endRow);
       }
   }
@@ -338,9 +336,9 @@ int main(int argc, char* argv[]) {
   gettimeofday(&tend, NULL);
   timer = tend.tv_sec - tstart.tv_sec + (tend.tv_usec - tstart.tv_usec)/1.e6;
   char *filename = malloc(sizeof(char) * 64);
-  sprintf(filename, "mandelbrot-%d-%ld.ppm", size, time(0));
+  sprintf(filename, "buddhabrot-%d-%ld.ppm", size, time(0));
   write_ppm_2d(filename, image, size, size);
-  printf("Computed mandelbrot set (%dx%d) in %f seconds\n", size, size, timer);
+  printf("Computed buddhabrot set (%dx%d) in %f seconds\n", size, size, timer);
   printf("Writing file: %s\n", filename);
   free(filename);
   free(palette);
